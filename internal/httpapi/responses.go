@@ -66,14 +66,6 @@ func ValidationError(c *fiber.Ctx, message string, errors map[string][]string) e
 	})
 }
 
-// handlePanic is a fiber middleware that recovers panics and returns a 500
-// without leaking stack traces.
-func handlePanic(c *fiber.Ctx, err error) {
-	log.Printf("recovered panic: %v", err)
-	_ = c.Status(fiber.StatusInternalServerError).
-		JSON(errorBody{Success: false, Message: "Internal server error"})
-}
-
 // ErrorHandler is a fiber error handler that converts any unhandled error
 // into a 500 JSON response without stack traces.
 func ErrorHandler(c *fiber.Ctx, err error) error {
