@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 // RunMigrations applies all pending up migrations using the file:// driver.
