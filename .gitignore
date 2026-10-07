@@ -1,0 +1,12 @@
+# Env / secrets
+.env
+
+# Binaries
+bin/
+*.exe
+
+# OS / editor noise
+.DS_Store
+.vscode/
+.idea/
+*.log
