@@ -25,3 +25,20 @@ func RunMigrations(dsn string) error {
 	log.Println("migrate: all migrations applied")
 	return nil
 }
+
+// DownMigrations reverts all migrations (drop everything).
+func DownMigrations(dsn string) error {
+	m, err := migrate.New("file://migrations", dsn)
+	if err != nil {
+		return fmt.Errorf("migrate.New: %w", err)
+	}
+	if err := m.Down(); err != nil {
+		if err == migrate.ErrNoChange {
+			log.Println("migrate: already down")
+			return nil
+		}
+		return fmt.Errorf("migrate.Down: %w", err)
+	}
+	log.Println("migrate: all migrations reverted")
+	return nil
+}
