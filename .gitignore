@@ -10,3 +10,7 @@ bin/
 .vscode/
 .idea/
 *.log
+
+# Transient builds (AppLocker workaround)
+.tmp-*
+tmp-*.exe
