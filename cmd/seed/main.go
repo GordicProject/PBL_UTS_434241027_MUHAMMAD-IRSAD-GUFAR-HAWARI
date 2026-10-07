@@ -97,8 +97,8 @@ func main() {
 	}
 
 	for i, name := range studentNames {
-		// NIM: 12 digits, sequential starting from 202211010001
-		nim := fmt.Sprintf("2022%09d", 10000+i)
+		// NIM: 12 digits, e.g. 202210000001, 202210000002, ...
+		nim := fmt.Sprintf("%012d", 202210000001+i)
 		email := fmt.Sprintf("mahasiswa%d@siakad.test", i+1)
 		prodi := prodis[i%3]
 		angkatan := angkatanList[i%4]
