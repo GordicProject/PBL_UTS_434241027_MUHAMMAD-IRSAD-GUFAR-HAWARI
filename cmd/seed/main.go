@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 
 	"siakad-api/internal/config"
@@ -123,29 +122,34 @@ func main() {
 		// Hash NIM as the initial password
 		hashed, _ := bcrypt.GenerateFromPassword([]byte(nim), bcrypt.DefaultCost)
 
-		// Insert user (ON CONFLICT handles idempotency)
+		// Insert user: check-then-insert (deterministic, no ON CONFLICT RETURNING)
+		var userExists int
+		if err := pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM users WHERE email = $1`, email,
+		).Scan(&userExists); err != nil {
+			log.Fatalf("check user %s: %v", email, err)
+		}
 		var userID int64
-		err := pool.QueryRow(ctx,
-			`INSERT INTO users (email, password, role)
-			 VALUES ($1, $2, 'mahasiswa')
-			 ON CONFLICT (email) DO NOTHING
-			 RETURNING id`,
-			email, string(hashed),
-		).Scan(&userID)
-		if err != nil {
-			// No rows returned → conflict happened, look up existing user
-			if err2 := pool.QueryRow(ctx,
+		if userExists > 0 {
+			if err := pool.QueryRow(ctx,
 				`SELECT id FROM users WHERE email = $1`, email,
-			).Scan(&userID); err2 != nil {
-				log.Fatalf("lookup user %s: %v", email, err2)
+			).Scan(&userID); err != nil {
+				log.Fatalf("lookup user %s: %v", email, err)
+			}
+		} else {
+			if err := pool.QueryRow(ctx,
+				`INSERT INTO users (email, password, role)
+				 VALUES ($1, $2, 'mahasiswa') RETURNING id`,
+				email, string(hashed),
+			).Scan(&userID); err != nil {
+				log.Fatalf("insert user %s: %v", email, err)
 			}
 		}
 
-		// Insert student
-		_, err = pool.Exec(ctx,
+		// Insert student (already confirmed not to exist by NIM check above)
+		_, err := pool.Exec(ctx,
 			`INSERT INTO students (user_id, nim, nama, prodi, angkatan, ipk_terakhir)
-			 VALUES ($1, $2, $3, $4, $5, $6)
-			 ON CONFLICT (nim) DO NOTHING`,
+			 VALUES ($1, $2, $3, $4, $5, $6)`,
 			userID, nim, name, prodi, angkatan, ipk,
 		)
 		if err != nil {
@@ -224,5 +228,3 @@ func loadEnv(path string) error {
 	return nil
 }
 
-// Ensure pgxpool is imported even if unused elsewhere in this file.
-var _ = pgxpool.New
