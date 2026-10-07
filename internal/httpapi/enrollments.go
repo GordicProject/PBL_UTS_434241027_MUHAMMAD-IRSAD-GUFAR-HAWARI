@@ -72,7 +72,6 @@ func CreateEnrollment(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 		// --- Transaction with row locking ---
 		ctx := c.Context()
 		tx, err := pool.Begin(ctx)
-		defer tx.Rollback(ctx)
 		if err != nil {
 			log.Printf("enrollment begin tx error: %v", err)
 			return Error(c, fiber.StatusInternalServerError, "Internal server error")

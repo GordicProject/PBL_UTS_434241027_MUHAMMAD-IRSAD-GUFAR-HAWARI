@@ -61,9 +61,9 @@ func main() {
 	admin.Put("/students/:id", httpapi.UpdateStudent(pool, cfg))
 	admin.Delete("/students/:id", httpapi.DeleteStudent(pool, cfg))
 
-	// --- Admin + mahasiswa self-access on GET /students/:id ---
-	// The combined group runs JWTMiddleware; the handler itself checks
-	// whether the caller is admin or the owning mahasiswa.
+	// --- GET /students/:id (admin or owning mahasiswa) ---
+	// The handler itself checks: admin passes; mahasiswa only for own record.
+	// No RequireAdmin middleware here — the combined group allows both roles.
 	combined := v1.Group("")
 	combined.Use(httpapi.JWTMiddleware(cfg.JWTSecret))
 	combined.Get("/students/:id", httpapi.GetStudent(pool, cfg))

@@ -3,7 +3,6 @@ package httpapi
 import (
 	"log"
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -43,7 +42,9 @@ func JWTMiddleware(secret string) fiber.Handler {
 		c.Locals("user_id", claims.UserID)
 		c.Locals("email", claims.Email)
 		c.Locals("role", claims.Role)
-		c.Locals("jwt_expires_at", time.Now().Add(24*time.Hour).Unix())
+		if claims.ExpiresAt != nil {
+			c.Locals("jwt_expires_at", claims.ExpiresAt.Unix())
+		}
 		return c.Next()
 	}
 }

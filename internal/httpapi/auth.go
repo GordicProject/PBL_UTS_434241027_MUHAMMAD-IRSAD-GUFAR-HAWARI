@@ -80,8 +80,7 @@ func Login(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 		if emailOK && len(validationErrs) == 0 {
 			// All good, continue
 		} else if len(validationErrs) > 0 {
-			// Record this as a failed attempt for rate limiting
-			RecordLoginFailure(ip)
+			// 422 validation errors should NOT count toward the rate limiter
 			return ValidationError(c, "Validasi gagal", validationErrs)
 		}
 
