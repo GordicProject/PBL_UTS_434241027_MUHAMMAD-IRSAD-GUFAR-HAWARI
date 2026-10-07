@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -258,6 +259,8 @@ func CreateStudent(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 		}
 		if req.Email == "" {
 			validationErrs["email"] = append(validationErrs["email"], "email wajib diisi")
+		} else if _, err := mail.ParseAddress(req.Email); err != nil {
+			validationErrs["email"] = append(validationErrs["email"], "format email tidak valid")
 		}
 		if req.Prodi == "" {
 			validationErrs["prodi"] = append(validationErrs["prodi"], "prodi wajib diisi")
