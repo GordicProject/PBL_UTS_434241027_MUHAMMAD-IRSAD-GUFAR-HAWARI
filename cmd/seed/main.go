@@ -146,25 +146,15 @@ func main() {
 			}
 		}
 
-		// Insert student: idempotent — check by NIM before inserting.
-		// The outer NIM check (line ~113) already skips if the student exists;
-		// this second check guards against a race between the outer check and the
-		// insert (e.g. two parallel seeder runs).
-		var stuCount int
-		if err := pool.QueryRow(ctx,
-			`SELECT COUNT(*) FROM students WHERE nim = $1`, nim,
-		).Scan(&stuCount); err != nil {
-			log.Fatalf("check student %s: %v", nim, err)
-		}
-		if stuCount == 0 {
-			_, err := pool.Exec(ctx,
-				`INSERT INTO students (user_id, nim, nama, prodi, angkatan, ipk_terakhir)
-				 VALUES ($1, $2, $3, $4, $5, $6)`,
-				userID, nim, name, prodi, angkatan, ipk,
-			)
-			if err != nil {
-				log.Fatalf("insert student %s: %v", nim, err)
-			}
+		// Insert student — idempotent via ON CONFLICT DO NOTHING (per PROMPT-API.md)
+		_, err := pool.Exec(ctx,
+			`INSERT INTO students (user_id, nim, nama, prodi, angkatan, ipk_terakhir)
+			 VALUES ($1, $2, $3, $4, $5, $6)
+			 ON CONFLICT (nim) DO NOTHING`,
+			userID, nim, name, prodi, angkatan, ipk,
+		)
+		if err != nil {
+			log.Fatalf("insert student %s: %v", nim, err)
 		}
 	}
 	fmt.Println("Seeded 20 mahasiswa.")
