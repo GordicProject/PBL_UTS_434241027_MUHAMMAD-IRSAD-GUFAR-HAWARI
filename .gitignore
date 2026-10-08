@@ -14,3 +14,9 @@ bin/
 # Transient builds (AppLocker workaround)
 .tmp-*
 tmp-*.exe
+
+test.ps1
+
+hasil.txt
+
+final.ps1
