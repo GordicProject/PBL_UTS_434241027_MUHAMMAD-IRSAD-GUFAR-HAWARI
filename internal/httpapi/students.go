@@ -22,14 +22,13 @@ import (
 
 // studentResponse is the shape of a single student in list responses.
 type studentResponse struct {
-	ID            int64   `json:"id"`
-	NIM           string  `json:"nim"`
-	Nama          string  `json:"nama"`
-	Prodi         string  `json:"prodi"`
-	Angkatan      int     `json:"angkatan"`
-	IPKTerakhir   *float64 `json:"ipk_terakhir"`
-	Email         string  `json:"email"`
-	YearCreated   string  `json:"tahun_akademik"`
+	ID          int64    `json:"id"`
+	NIM         string   `json:"nim"`
+	Nama        string   `json:"nama"`
+	Prodi       string   `json:"prodi"`
+	Angkatan    int      `json:"angkatan"`
+	IPKTerakhir *float64 `json:"ipk_terakhir"`
+	Email       string   `json:"email"`
 }
 
 // createStudentRequest is the JSON body for POST /students.
@@ -52,25 +51,25 @@ type updateStudentRequest struct {
 
 // enrolledCourse is one item in the student detail's course list.
 type enrolledCourse struct {
-	ID          int64  `json:"id"`
-	KodeMK      string `json:"kode_mk"`
-	NamaMK      string `json:"nama_mk"`
-	SKS         int    `json:"sks"`
+	ID            int64  `json:"id"`
+	KodeMK        string `json:"kode_mk"`
+	NamaMK        string `json:"nama_mk"`
+	SKS           int    `json:"sks"`
 	TahunAkademik string `json:"tahun_akademik"`
 }
 
 // studentDetailResponse is the GET /students/:id response data.
 type studentDetailResponse struct {
-	ID           int64          `json:"id"`
-	NIM          string         `json:"nim"`
-	Nama         string         `json:"nama"`
-	Prodi        string         `json:"prodi"`
-	Angkatan     int           `json:"angkatan"`
-	IPKTerakhir  *float64      `json:"ipk_terakhir"`
-	Email        string         `json:"email"`
-	Courses      []enrolledCourse `json:"courses"`
-	TotalSKS     int          `json:"total_sks"`
-	BatasSKS     int          `json:"batas_sks"`
+	ID          int64            `json:"id"`
+	NIM         string           `json:"nim"`
+	Nama        string           `json:"nama"`
+	Prodi       string           `json:"prodi"`
+	Angkatan    int              `json:"angkatan"`
+	IPKTerakhir *float64         `json:"ipk_terakhir"`
+	Email       string           `json:"email"`
+	Courses     []enrolledCourse `json:"courses"`
+	TotalSKS    int              `json:"total_sks"`
+	BatasSKS    int              `json:"batas_sks"`
 }
 
 // --- helpers ---
@@ -585,4 +584,3 @@ func DeleteStudent(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 		return SuccessNoContent(c)
 	}
 }
-
