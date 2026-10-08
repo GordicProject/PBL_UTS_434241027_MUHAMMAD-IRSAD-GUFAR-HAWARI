@@ -170,8 +170,6 @@ func ListStudents(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 			orderClause = "s.nama ASC"
 		case "-ipk_terakhir":
 			orderClause = "s.ipk_terakhir DESC NULLS LAST"
-		case "ipk_terakhir":
-			orderClause = "s.ipk_terakhir ASC NULLS LAST"
 		}
 
 		// Count total
