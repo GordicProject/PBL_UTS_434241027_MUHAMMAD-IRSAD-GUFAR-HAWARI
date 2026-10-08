@@ -45,39 +45,40 @@ func main() {
 
 	v1 := app.Group("/api/v1")
 
-	// --- Public: login with rate limiting ---
+	// --- Public (no JWT) ---
 	v1.Post("/auth/login", httpapi.RateLimitLogin(), httpapi.Login(pool, cfg))
 
-	// --- Authenticated (any role) ---
-	auth := v1.Group("")
-	auth.Use(httpapi.JWTMiddleware(cfg.JWTSecret))
-	auth.Get("/auth/me", httpapi.Me(pool, cfg))
+	// All remaining routes require a valid JWT. Register JWT as a single
+	// global middleware on v1 so it runs before every route handler below.
+	// Using app.Use() instead of Group("") avoids Fiber v2's empty-prefix
+	// route-tree pollution where multiple Group("") instances share the
+	// same tree node and leak middlewares into each other's routes.
+	app.Use(httpapi.JWTMiddleware(cfg.JWTSecret))
 
-	// --- Admin only ---
-	admin := v1.Group("")
-	admin.Use(httpapi.JWTMiddleware(cfg.JWTSecret), httpapi.RequireAdmin)
-	admin.Get("/students", httpapi.ListStudents(pool, cfg))
-	admin.Post("/students", httpapi.CreateStudent(pool, cfg))
-	admin.Put("/students/:id", httpapi.UpdateStudent(pool, cfg))
-	admin.Delete("/students/:id", httpapi.DeleteStudent(pool, cfg))
+	// --- Authenticated, any role ---
+	v1.Get("/auth/me", httpapi.Me(pool, cfg))
 
-	// --- GET /students/:id (admin or owning mahasiswa) ---
-	// The handler itself checks: admin passes; mahasiswa only for own record.
-	// No RequireAdmin middleware here — the combined group allows both roles.
-	combined := v1.Group("")
-	combined.Use(httpapi.JWTMiddleware(cfg.JWTSecret))
-	combined.Get("/students/:id", httpapi.GetStudent(pool, cfg))
+	// --- Admin-only (role checked inline in handler wrapper) ---
+	withAdmin := func(h fiber.Handler) fiber.Handler {
+		return httpapi.RequireAdmin(h)
+	}
+	v1.Get("/students", withAdmin(httpapi.ListStudents(pool, cfg)))
+	v1.Post("/students", withAdmin(httpapi.CreateStudent(pool, cfg)))
+	v1.Put("/students/:id", withAdmin(httpapi.UpdateStudent(pool, cfg)))
+	v1.Delete("/students/:id", withAdmin(httpapi.DeleteStudent(pool, cfg)))
+
+	// GET /students/:id — admin or owning mahasiswa
+	v1.Get("/students/:id", httpapi.GetStudent(pool, cfg))
 
 	// --- All authenticated roles ---
-	roles := v1.Group("")
-	roles.Use(httpapi.JWTMiddleware(cfg.JWTSecret))
-	roles.Get("/courses", httpapi.ListCourses(pool, cfg))
+	v1.Get("/courses", httpapi.ListCourses(pool, cfg))
 
-	// --- Mahasiswa only ---
-	mhs := v1.Group("")
-	mhs.Use(httpapi.JWTMiddleware(cfg.JWTSecret), httpapi.RequireMahasiswa)
-	mhs.Post("/enrollments", httpapi.CreateEnrollment(pool, cfg))
-	mhs.Delete("/enrollments/:id", httpapi.DeleteEnrollment(pool, cfg))
+	// --- Mahasiswa-only (role checked inline in handler wrapper) ---
+	withMhs := func(h fiber.Handler) fiber.Handler {
+		return httpapi.RequireMahasiswa(h)
+	}
+	v1.Post("/enrollments", withMhs(httpapi.CreateEnrollment(pool, cfg)))
+	v1.Delete("/enrollments/:id", withMhs(httpapi.DeleteEnrollment(pool, cfg)))
 
 	addr := ":" + cfg.Port
 	log.Printf("SIAKAD Mini server starting on %s", addr)

@@ -49,26 +49,31 @@ func JWTMiddleware(secret string) fiber.Handler {
 	}
 }
 
-// RequireAdmin is a fiber middleware that must run after JWTMiddleware.
-// It rejects any request whose role is not "admin".
-func RequireAdmin(c *fiber.Ctx) error {
-	role, _ := c.Locals("role").(string)
-	if role != "admin" {
-		log.Printf("403 admin denied: user=%v role=%s", c.Locals("user_id"), role)
-		return Error(c, fiber.StatusForbidden, "Admin role required")
+// RequireAdmin wraps a handler so it only executes when the caller's role is
+// "admin". Use as: withAdmin(handler) — pairs with JWTMiddleware which sets
+// c.Locals("role").
+func RequireAdmin(next fiber.Handler) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		role, _ := c.Locals("role").(string)
+		if role != "admin" {
+			log.Printf("403 admin denied: user=%v role=%s", c.Locals("user_id"), role)
+			return Error(c, fiber.StatusForbidden, "Admin role required")
+		}
+		return next(c)
 	}
-	return c.Next()
 }
 
-// RequireMahasiswa is a fiber middleware that must run after JWTMiddleware.
-// It rejects any request whose role is not "mahasiswa".
-func RequireMahasiswa(c *fiber.Ctx) error {
-	role, _ := c.Locals("role").(string)
-	if role != "mahasiswa" {
-		log.Printf("403 mahasiswa denied: user=%v role=%s", c.Locals("user_id"), role)
-		return Error(c, fiber.StatusForbidden, "Mahasiswa role required")
+// RequireMahasiswa wraps a handler so it only executes when the caller's role
+// is "mahasiswa".
+func RequireMahasiswa(next fiber.Handler) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		role, _ := c.Locals("role").(string)
+		if role != "mahasiswa" {
+			log.Printf("403 mahasiswa denied: user=%v role=%s", c.Locals("user_id"), role)
+			return Error(c, fiber.StatusForbidden, "Mahasiswa role required")
+		}
+		return next(c)
 	}
-	return c.Next()
 }
 
 // RequireMahasiswaOrAdmin allows both mahasiswa and admin roles through.
