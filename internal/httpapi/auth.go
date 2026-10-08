@@ -133,7 +133,7 @@ func Login(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(cfg.JWTExpires)),
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
-				Issuer:     "siakad-api",
+				Issuer:    "siakad-api",
 			},
 		}
 		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(cfg.JWTSecret))
@@ -176,7 +176,8 @@ func Me(pool *pgxpool.Pool, cfg *config.Config) fiber.Handler {
 			).Scan(&si.NIM, &si.Nama, &si.Prodi, &si.Angkatan)
 			if err != nil {
 				if errors.Is(err, pgx.ErrNoRows) {
-					return Error(c, fiber.StatusNotFound, "Data mahasiswa tidak ditemukan")
+					// Soft-deleted: omit students sub-object, return 200
+					return Success(c, fiber.StatusOK, fmt.Sprintf("Data user %s", email), resp, nil)
 				}
 				log.Printf("me db error: %v", err)
 				return Error(c, fiber.StatusInternalServerError, "Internal server error")
